@@ -1,13 +1,12 @@
 import express from 'express'
 import routes from './routes'
+import 'dotenv/config'
 
 class App {
   constructor() {
     this.server = express()
     this.middlewares()
     this.routes()
-    const var_doida = 3
-    console.log(var_doida)
   }
 
   middlewares() {
