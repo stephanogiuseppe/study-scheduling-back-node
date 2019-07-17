@@ -6,6 +6,8 @@ class App {
     this.server = express()
     this.middlewares()
     this.routes()
+    const var_doida = 3
+    console.log(var_doida)
   }
 
   middlewares() {
