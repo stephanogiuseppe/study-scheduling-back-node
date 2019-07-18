@@ -18,7 +18,7 @@ module.exports = {
   },
   rules: {
     "prettier/prettier": "error",
-    "space-before-function-paren": ["error", "never"],
+    "space-before-function-paren": ["error", { "named": "never" }],
     "camelcase": "off",
     "no-var": "error"
   }
