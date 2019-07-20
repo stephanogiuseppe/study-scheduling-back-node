@@ -17,12 +17,17 @@ class SessionController {
       return res.status(400).json({ error: 'Validation fails' })
     }
 
+    let user = null
     const { email, password } = req.body
 
-    const user = await User.findOne({ where: { email } })
+    try {
+      user = await User.findOne({ where: { email } })
+    } catch (error) {
+      res.status(500).json({ error: 'Web server is down' })
+    }
 
     if (!user) {
-      return res.status(400).json({ error: 'User notFound' })
+      return res.status(400).json({ error: 'User not found' })
     }
 
     if (!(await user.checkPassword(password))) {
