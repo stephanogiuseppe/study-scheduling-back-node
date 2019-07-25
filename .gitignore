@@ -1,6 +1,7 @@
 /node_modules
 /.vscode
 /dist
+/tmp/uploads
 yarn.lock
 .env
 *.log
