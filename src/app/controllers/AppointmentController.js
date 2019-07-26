@@ -1,30 +1,26 @@
 import * as Yup from 'yup'
+import { startOfHour, parseISO, isAfter } from 'date-fns'
 
 import User from '../models/User'
 import Appointment from '../models/Appointment'
 
 class AppointmentController {
   async store(req, res) {
-    const schema = Yup.object().shape({
-      provider_id: Yup.number().required(),
-      date: Yup.date().required()
-    })
-
-    if (!(await schema.isValid(req.body))) {
+    if (!(await checkValidationData(req.body))) {
       return res.status(400).json({ error: 'Validation fails' })
     }
 
     const { provider_id, date } = req.body
 
     try {
-      const isProvider = await User.findOne({
-        where: { id: provider_id, provider: true }
-      })
-
-      if (!isProvider) {
+      if (!(await checkUserIsProvider(provider_id))) {
         return res
           .status(401)
           .json({ error: 'You can only create appointments with providers' })
+      }
+
+      if (!checkStartHourIsValid(date)) {
+        return res.status(400).json({ error: 'Past date not permited' })
       }
 
       const appointment = await Appointment.create({
@@ -38,6 +34,28 @@ class AppointmentController {
       return res.status(500).json({ error: 'Web server is down' })
     }
   }
+}
+
+async function checkValidationData(data) {
+  const schema = Yup.object().shape({
+    provider_id: Yup.number().required(),
+    date: Yup.date().required()
+  })
+
+  const validData = await schema.isValid(data)
+  return validData
+}
+
+async function checkUserIsProvider(id) {
+  const isProvider = await User.findOne({
+    where: { id, provider: true }
+  })
+  return isProvider
+}
+
+function checkStartHourIsValid(date) {
+  const hourStart = startOfHour(parseISO(date))
+  return isAfter(hourStart, new Date())
 }
 
 export default new AppointmentController()
