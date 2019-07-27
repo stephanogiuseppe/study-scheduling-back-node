@@ -14,6 +14,7 @@ class UserController {
 
       return res.status(201).json({ id, name, email, provider })
     } catch (error) {
+      /* istanbul ignore next */
       res.status(500).json({ error: 'Web server is down' })
     }
   }
@@ -28,7 +29,7 @@ class UserController {
       const user = await User.findByPk(req.userId)
 
       if (email !== user.email) {
-        if (!checkUserAlreadyExists(req.body.email)) {
+        if (await checkUserAlreadyExists(email)) {
           return res.status(400).json({ error: 'E-mail already exists' })
         }
       }
@@ -40,6 +41,7 @@ class UserController {
       const { id, name, provider } = await user.update(req.body)
       return res.json({ id, name, email, provider })
     } catch (error) {
+      /* istanbul ignore next */
       res.status(500).json({ error: 'Web server is down' })
     }
   }
