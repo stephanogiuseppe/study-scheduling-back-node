@@ -6,7 +6,7 @@ import truncate from '../utils/truncate'
 describe('User', () => {
   beforeEach(async () => truncate())
 
-  describe('store function', () => {
+  describe('Store functions', () => {
     it('Should be register an user', async () => {
       const res = await request(app)
         .post('/users')
@@ -40,7 +40,7 @@ describe('User', () => {
     })
   })
 
-  describe('update function', () => {
+  describe('Update functions', () => {
     it('Should be update an user', async () => {
       await request(app)
         .post('/users')
