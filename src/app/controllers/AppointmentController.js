@@ -3,8 +3,33 @@ import { startOfHour, parseISO, isAfter } from 'date-fns'
 
 import User from '../models/User'
 import Appointment from '../models/Appointment'
+import File from '../models/File'
 
 class AppointmentController {
+  async index(req, res) {
+    const appointments = await Appointment.findAll({
+      where: { user_id: req.userId, canceled_at: null },
+      order: ['date'],
+      attributes: ['id', 'date'],
+      include: [
+        {
+          model: User,
+          as: 'provider',
+          attributes: ['id', 'name'],
+          include: [
+            {
+              model: File,
+              as: 'avatar',
+              attributes: ['id', 'path', 'url']
+            }
+          ]
+        }
+      ]
+    })
+
+    return res.json(appointments)
+  }
+
   async store(req, res) {
     if (!(await checkValidationData(req.body))) {
       return res.status(400).json({ error: 'Validation fails' })
@@ -21,6 +46,10 @@ class AppointmentController {
 
       if (!checkStartHourIsValid(date)) {
         return res.status(400).json({ error: 'Past date not permited' })
+      }
+
+      if (!(await checkAvailableAppointment(provider_id, date))) {
+        return res.status(400).json({ error: 'Appointment is not available' })
       }
 
       const appointment = await Appointment.create({
@@ -56,6 +85,14 @@ async function checkUserIsProvider(id) {
 function checkStartHourIsValid(date) {
   const hourStart = startOfHour(parseISO(date))
   return isAfter(hourStart, new Date())
+}
+
+async function checkAvailableAppointment(providerId, date) {
+  const hourStart = startOfHour(parseISO(date))
+  const isNotAvailable = await Appointment.findOne({
+    where: { provider_id: providerId, canceled_at: null, date: hourStart }
+  })
+  return !isNotAvailable
 }
 
 export default new AppointmentController()
