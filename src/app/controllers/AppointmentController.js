@@ -1,9 +1,11 @@
 import * as Yup from 'yup'
-import { startOfHour, parseISO, isAfter } from 'date-fns'
+import { startOfHour, parseISO, isAfter, format } from 'date-fns'
+import en from 'date-fns/locale/en-US'
 
 import User from '../models/User'
 import Appointment from '../models/Appointment'
 import File from '../models/File'
+import Notification from '../schemas/Notification'
 
 class AppointmentController {
   async index(req, res) {
@@ -40,8 +42,10 @@ class AppointmentController {
 
     const { provider_id, date } = req.body
 
+    const user = await checkUserIsProvider(provider_id)
+
     try {
-      if (!(await checkUserIsProvider(provider_id))) {
+      if (!user) {
         return res
           .status(401)
           .json({ error: 'You can only create appointments with providers' })
@@ -59,6 +63,11 @@ class AppointmentController {
         user_id: req.userId,
         provider_id,
         date
+      })
+
+      await Notification.create({
+        content: `New appointment for ${user.name} in ${formatDateToPT(date)}`,
+        user: provider_id
       })
 
       return res.status(201).json(appointment)
@@ -96,6 +105,11 @@ async function checkAvailableAppointment(providerId, date) {
     where: { provider_id: providerId, canceled_at: null, date: hourStart }
   })
   return !isNotAvailable
+}
+
+function formatDateToPT(date) {
+  const formnatedDate = startOfHour(parseISO(date))
+  return format(formnatedDate, "dd'/'MMMM 'at' H:mm", { locale: en })
 }
 
 export default new AppointmentController()
