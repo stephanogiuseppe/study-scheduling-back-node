@@ -44,6 +44,12 @@ class AppointmentController {
 
     const user = await checkUserIsProvider(provider_id)
 
+    if (provider_id === user.id) {
+      return res
+        .status(401)
+        .json({ error: 'You can not create appointments to same provider' })
+    }
+
     try {
       if (!user) {
         return res
