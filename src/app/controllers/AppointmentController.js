@@ -1,11 +1,19 @@
 import * as Yup from 'yup'
-import { startOfHour, parseISO, isAfter, format } from 'date-fns'
 import en from 'date-fns/locale/en-US'
+import {
+  startOfHour,
+  parseISO,
+  isAfter,
+  format,
+  subHours,
+  isBefore
+} from 'date-fns'
 
 import User from '../models/User'
 import Appointment from '../models/Appointment'
 import File from '../models/File'
 import Notification from '../schemas/Notification'
+import Mail from './../../lib/Mail'
 
 class AppointmentController {
   async index(req, res) {
@@ -47,7 +55,7 @@ class AppointmentController {
     if (provider_id === user.id) {
       return res
         .status(401)
-        .json({ error: 'You can not create appointments to same provider' })
+        .json({ error: 'You can not create appointments with same provider' })
     }
 
     try {
@@ -80,6 +88,44 @@ class AppointmentController {
     } catch (error) {
       return res.status(500).json({ error: 'Web server is down' })
     }
+  }
+
+  async delete(req, res) {
+    const appointment = await Appointment.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: 'provider',
+          attributes: ['name', 'email']
+        }
+      ]
+    })
+
+    if (appointment.user_id !== req.userId) {
+      return res.status(401).json({
+        error: "You don't have permission to cancel  this appointment"
+      })
+    }
+
+    const dateWithSub = subHours(appointment.date, 2)
+
+    if (isBefore(dateWithSub, new Date())) {
+      return res.status(401).json({
+        error: 'You can only cancel appointments 2 hours in advance'
+      })
+    }
+
+    appointment.canceled_at = new Date()
+
+    await appointment.save()
+
+    await Mail.sendMail({
+      to: `${appointment.provider.name} <${appointment.provider.email}>`,
+      subject: 'Canceled',
+      text: 'Canceled'
+    })
+
+    return res.json(appointment)
   }
 }
 
