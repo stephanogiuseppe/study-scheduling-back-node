@@ -86,46 +86,60 @@ class AppointmentController {
 
       return res.status(201).json(appointment)
     } catch (error) {
-      return res.status(500).json({ error: 'Web server is down' })
+      return res.status(500).json({ error: 'Web server error' })
     }
   }
 
   async delete(req, res) {
-    const appointment = await Appointment.findByPk(req.params.id, {
-      include: [
-        {
-          model: User,
-          as: 'provider',
-          attributes: ['name', 'email']
+    try {
+      const appointment = await Appointment.findByPk(req.params.id, {
+        include: [
+          {
+            model: User,
+            as: 'provider',
+            attributes: ['name', 'email']
+          },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['name']
+          }
+        ]
+      })
+
+      if (appointment.user_id !== req.userId) {
+        return res.status(401).json({
+          error: "You don't have permission to cancel  this appointment"
+        })
+      }
+
+      const dateWithSub = subHours(appointment.date, 2)
+
+      if (isBefore(dateWithSub, new Date())) {
+        return res.status(401).json({
+          error: 'You can only cancel appointments 2 hours in advance'
+        })
+      }
+
+      appointment.canceled_at = new Date()
+
+      await appointment.save()
+
+      await Mail.sendMail({
+        to: `${appointment.provider.name} <${appointment.provider.email}>`,
+        subject: 'Canceled',
+        template: 'cancelation',
+        context: {
+          provider: appointment.provider.name,
+          user: appointment.user.name,
+          date: format(appointment.date, "dd'/'MMMM 'at' H:mm", { locale: en })
         }
-      ]
-    })
-
-    if (appointment.user_id !== req.userId) {
-      return res.status(401).json({
-        error: "You don't have permission to cancel  this appointment"
       })
+
+      return res.json(appointment)
+    } catch (error) {
+      return res.status(500).json({ error: 'Web server error' })
     }
-
-    const dateWithSub = subHours(appointment.date, 2)
-
-    if (isBefore(dateWithSub, new Date())) {
-      return res.status(401).json({
-        error: 'You can only cancel appointments 2 hours in advance'
-      })
-    }
-
-    appointment.canceled_at = new Date()
-
-    await appointment.save()
-
-    await Mail.sendMail({
-      to: `${appointment.provider.name} <${appointment.provider.email}>`,
-      subject: 'Canceled',
-      text: 'Canceled'
-    })
-
-    return res.json(appointment)
   }
 }
 
@@ -160,8 +174,8 @@ async function checkAvailableAppointment(providerId, date) {
 }
 
 function formatDateToPT(date) {
-  const formnatedDate = startOfHour(parseISO(date))
-  return format(formnatedDate, "dd'/'MMMM 'at' H:mm", { locale: en })
+  const formatedDate = startOfHour(parseISO(date))
+  return format(formatedDate, "dd'/'MMMM 'at' H:mm", { locale: en })
 }
 
 export default new AppointmentController()
