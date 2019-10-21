@@ -1,3 +1,3 @@
 export default {
-  dsn: process.env.SENTRY_URL
+  dsn: process.env.SENTRY_DSN
 }

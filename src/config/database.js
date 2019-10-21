@@ -3,11 +3,11 @@ require('dotenv').config({
 })
 
 module.exports = {
-  dialect: process.env.DB_DIALECT || 'postgres',
-  host: process.env.DB_HOST,
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE_NAME,
+  dialect: process.env.DB_SQL_DIALECT || 'postgres',
+  host: process.env.DB_SQL_HOST,
+  username: process.env.DB_SQL_USERNAME,
+  password: process.env.DB_SQL_PASSWORD,
+  database: process.env.DB_SQL_DATABASE_NAME,
   loggin: false,
   define: {
     timestamps: true,
