@@ -10,7 +10,9 @@
     "pretest": "set NODE_ENV=test&&sequelize db:migrate",
     "test": "set NODE_ENV=test&&jest",
     "posttest": "set NODE_ENV=test&&sequelize db:migrate:undo:all",
-    "queue": "nodemon src/queue.js"
+    "queue": "nodemon src/queue.js",
+    "migrate": "sequelize db:migrate",
+    "undo-migrate": "sequelize db:migrate:undo:all"
   },
   "dependencies": {
     "@sentry/node": "5.7.1",
@@ -46,7 +48,7 @@
     "jest": "^24.8.0",
     "nodemon": "^1.19.1",
     "prettier": "^1.18.2",
-    "sequelize-cli": "^5.5.0",
+    "sequelize-cli": "^5.5.1",
     "sqlite3": "^4.0.9",
     "standard-version": "^7.0.0",
     "sucrase": "^3.10.1",
