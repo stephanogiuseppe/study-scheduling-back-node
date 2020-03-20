@@ -24,7 +24,11 @@ class Database {
   mongo() {
     this.mongoConnection = mongoose.connect(
       `${process.env.DB_NOSQL_HOST}/${process.env.DB_NOSQL_DATABASE_NAME}`,
-      { useNewUrlParser: true, useFindAndModify: true }
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: true
+      }
     )
   }
 }

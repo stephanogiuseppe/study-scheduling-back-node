@@ -51,16 +51,16 @@ class AppointmentController {
 
     const { provider_id, date } = req.body
 
-    const user = await checkUserIsProvider(provider_id)
-
-    if (provider_id === user.id) {
-      return res
-        .status(401)
-        .json({ error: 'You can not create appointments with same provider' })
-    }
-
     try {
-      if (!user) {
+      if (provider_id === req.userId) {
+        return res
+          .status(401)
+          .json({ error: 'You can not create appointments with same provider' })
+      }
+
+      const userProvider = await checkUserIsProvider(provider_id)
+
+      if (!userProvider) {
         return res
           .status(401)
           .json({ error: 'You can only create appointments with providers' })
@@ -81,7 +81,9 @@ class AppointmentController {
       })
 
       await Notification.create({
-        content: `New appointment for ${user.name} in ${formatDateToPT(date)}`,
+        content: `New appointment for ${userProvider.name} in ${formatDateToPT(
+          date
+        )}`,
         user: provider_id
       })
 
