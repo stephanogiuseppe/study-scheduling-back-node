@@ -3,19 +3,23 @@ import Notification from '../schemas/Notification'
 
 class NotificationController {
   async index(req, res) {
-    const user = await checkUserIsProvider(req.userId)
+    try {
+      const user = await checkUserIsProvider(req.userId)
 
-    if (!user) {
-      return res
-        .status(401)
-        .json({ error: 'Only provider can load notifications' })
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: 'Only provider can load notifications' })
+      }
+
+      const notifications = await Notification.find({ User: req.userId })
+        .sort({ createdAt: 'desc' })
+        .limit(10)
+
+      return res.json(notifications)
+    } catch (error) {
+      return res.status(500).json({ error: 'Web server error' })
     }
-
-    const notifications = await Notification.find({ user: req.userId })
-      .sort({ createdAt: 'desc' })
-      .limit(10)
-
-    return res.json(notifications)
   }
 
   async update(req, res) {
